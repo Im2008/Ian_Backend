@@ -12,20 +12,17 @@ from werkzeug.security import generate_password_hash
 from __init__ import app, db, login_manager  # Key Flask objects 
 # API endpoints
 from api.user import user_api 
-from api.section import section_api
 from api.pfp import pfp_api
-from api.stock import stock_api
-from api.analytics import analytics_api
 # database Initialization functions
 from model.user import User, initUsers
+from model.group import initGroups
+from model.post import initPosts
+from model.section import initSections
 # server only Views
 
 # register URIs for api endpoints
 app.register_blueprint(user_api)
-app.register_blueprint(section_api)
 app.register_blueprint(pfp_api) 
-app.register_blueprint(stock_api)
-app.register_blueprint(analytics_api)
 
 # Tell Flask-Login the view function name of your login route
 login_manager.login_view = "login"
@@ -127,6 +124,9 @@ custom_cli = AppGroup('custom', help='Custom commands')
 @custom_cli.command('generate_data')
 def generate_data():
     initUsers()
+    initGroups()
+    initPosts()
+    initSections()
 
 # Register the custom command group with the Flask application
 app.cli.add_command(custom_cli)

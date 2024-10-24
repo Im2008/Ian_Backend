@@ -29,7 +29,7 @@ import os
 # Add the directory containing main.py to the Python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 # Import application object
-from main import app, db, initUsers
+from main import app, db, generate_data
 
 # Backup the old database
 def backup_database(db_uri, backup_uri):
@@ -75,13 +75,10 @@ def main():
             db.drop_all()
             print("All tables dropped.")
             
-            # Create all tables
-            db.create_all()
-            print("All tables created.")
-            
-            # Add default test data 
-            initUsers() # test data
-            
+            # Create the tables defined in the project
+            print("Generating data.")
+            generate_data()
+                        
     except Exception as e:
         print(f"An error occurred: {e}")
         sys.exit(1)

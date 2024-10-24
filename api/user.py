@@ -5,7 +5,6 @@ from datetime import datetime
 from __init__ import app
 from api.jwt_authorize import token_required
 from model.user import User
-from model.github import GitHubUser
 
 user_api = Blueprint('user_api', __name__,
                    url_prefix='/api')
@@ -45,20 +44,6 @@ class UserAPI:
                         continue
                 
                     uid = user.get('uid')
-                    user_obj = User.query.filter_by(_uid=uid).first()
-                    # Process sections if provided
-                    if user_obj is not None:
-                        print("Creating:", user_obj.uid)
-                        abbreviations = [section["abbreviation"] for section in user.get('sections', [])]
-                        if len(abbreviations) > 0:  # Check if the list is not empty
-                            section_obj = user_obj.add_sections(abbreviations)
-                            if section_obj:
-                                # update the year of the added sections
-                                for section in user.get('sections'):
-                                    user_obj.update_section(section)
-                            else:
-                                results['errors'].append({'message': f'Failed to add sections {abbreviations} to user {uid}'})
-                                
             
             return jsonify(results) 
             
@@ -160,77 +145,6 @@ class UserAPI:
             # 204 is the status code for delete with no json response
             return f"Deleted user: {json}", 204 # use 200 to test with Postman
          
-    class _Section(Resource):  # Section API operation
-        @token_required()
-        def get(self):
-            ''' Retrieve the current user from the token_required authentication check '''
-            current_user = g.current_user
-            ''' Return the current user as a json object '''
-            return jsonify(current_user.read_sections())
-       
-        @token_required() 
-        def post(self):
-            ''' Retrieve the current user from the token_required authentication check '''
-            current_user = g.current_user
-            
-            ''' Read data for json body '''
-            body = request.get_json()
-            
-            ''' Error checking '''
-            sections = body.get('sections')
-            if sections is None or len(sections) == 0:
-                return {'message': f"No sections to add were provided"}, 400
-            
-            ''' Add sections'''
-            if not current_user.add_sections(sections):
-                return {'message': f'1 or more sections failed to add, current {sections} requested {current_user.read_sections()}'}, 404
-            
-            return jsonify(current_user.read_sections())
-        
-        @token_required()
-        def put(self):
-            ''' Retrieve the current user from the token_required authentication check '''
-            current_user = g.current_user
-
-            ''' Read data for json body '''
-            body = request.get_json()
-
-            ''' Error checking '''
-            section_data = body.get('section')
-            if not section_data:
-                return {'message': 'Section data is required'}, 400
-            
-            if not section_data.get('abbreviation'):
-                return {'message': 'Section abbreviation is required'}, 400
-            
-            if not section_data.get('year'):
-                return {'message': 'Section year is required'}, 400
-
-            ''' Update section year '''
-            if not current_user.update_section(section_data):
-                return {'message': f'Section {section_data.get("abbreviation")} not found or update failed'}, 404
-
-            return jsonify(current_user.read_sections())
-        
-        @token_required()
-        def delete(self):
-            ''' Retrieve the current user from the token_required authentication check '''
-            current_user = g.current_user
-    
-            ''' Read data for json body '''
-            body = request.get_json()
-    
-            ''' Error checking '''
-            sections = body.get('sections')
-            if sections is None or len(sections) == 0:
-                return {'message': f"No sections to delete were provided"}, 400
-    
-            ''' Remove sections '''
-            if not current_user.remove_sections(sections):
-                return {'message': f'1 or more sections failed to delete, current {sections} requested {current_user.read_sections()}'}, 404
-    
-            return {'message': f'Sections {sections} deleted successfully'}, 200
-        
     class _Security(Resource):
         def post(self):
             try:
@@ -331,6 +245,5 @@ class UserAPI:
     api.add_resource(_ID, '/id')
     api.add_resource(_BULK, '/users')
     api.add_resource(_CRUD, '/user')
-    api.add_resource(_Section, '/user/section') 
     api.add_resource(_Security, '/authenticate')          
     
