@@ -31,6 +31,36 @@ def default_year():
 
 ''' Tutorial: https://www.sqlalchemy.org/library.html#tutorials, try to get into Python shell and follow along '''
 
+import requests
+
+class GitHubUser:
+    """
+    Fetches GitHub user data by username.
+
+    Example usage:
+        github_user = GitHubUser()
+        data, status = github_user.get("username")
+    """
+    GITHUB_API_URL = "https://api.github.com/users/"
+
+    def get(self, username):
+        """
+        Fetch GitHub user data.
+
+        Args:
+            username (str): The GitHub username.
+
+        Returns:
+            tuple: A dictionary with user data and the status code.
+        """
+        try:
+            response = requests.get(f"{self.GITHUB_API_URL}{username}")
+            if response.status_code == 200:
+                return response.json(), 200
+            return {}, response.status_code
+        except requests.RequestException as e:
+            print(f"Error fetching user data: {e}")
+            return {}, 500
 class User(db.Model, UserMixin):
     """
     User Model
