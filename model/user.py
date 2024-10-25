@@ -1,4 +1,4 @@
-""" database dependencies to support sqliteDB examples """
+""" Database dependencies to support sqliteDB examples """
 from flask import current_app
 from flask_login import UserMixin
 from datetime import date
@@ -12,12 +12,19 @@ from __init__ import app, db
 """ Helper Functions """
 
 def default_year():
-    """Returns the default year for user enrollment based on the current month."""
+    """
+    Returns the default year for user enrollment based on the current month.
+    
+    If the current month is between August (8) and December (12), the enrollment year is the next year.
+    Otherwise, it is the current year.
+    
+    Returns:
+        int: The default year for user enrollment.
+    """
     current_month = date.today().month
     current_year = date.today().year
-    # If current month is between August (8) and December (12), the enrollment year is next year.
     if 7 <= current_month <= 12:
-        current_year = current_year + 1
+        current_year += 1
     return current_year 
 
 """ Database Models """
@@ -53,11 +60,21 @@ class User(db.Model, UserMixin):
     _pfp = db.Column(db.String(255), unique=False, nullable=True)
    
     # Define many-to-many relationship with Section model through UserSection table 
-    # Overlaps setting avoids cicular dependencies with UserSection class
+    # Overlaps setting avoids circular dependencies with UserSection class
     posts = db.relationship('Post', backref='author', lazy=True)
     moderated_groups = db.relationship('Group', backref='moderator', lazy=True)                              
     
     def __init__(self, name, uid, password=app.config["DEFAULT_PASSWORD"], role="User", pfp=''):
+        """
+        Constructor, 1st step in object creation.
+        
+        Args:
+            name (str): The name of the user.
+            uid (str): The unique identifier for the user.
+            password (str): The password for the user.
+            role (str): The role of the user within the application. Defaults to "User".
+            pfp (str): The path to the user's profile picture. Defaults to an empty string.
+        """
         self._name = name
         self._uid = uid
         self._email = "?"
@@ -67,113 +84,231 @@ class User(db.Model, UserMixin):
 
     # UserMixin/Flask-Login requires a get_id method to return the id as a string
     def get_id(self):
+        """
+        Returns the user's ID as a string.
+        
+        Returns:
+            str: The user's ID.
+        """
         return str(self.id)
 
     # UserMixin/Flask-Login requires is_authenticated to be defined
     @property
     def is_authenticated(self):
+        """
+        Indicates whether the user is authenticated.
+        
+        Returns:
+            bool: True if the user is authenticated, False otherwise.
+        """
         return True
 
     # UserMixin/Flask-Login requires is_active to be defined
     @property
     def is_active(self):
+        """
+        Indicates whether the user is active.
+        
+        Returns:
+            bool: True if the user is active, False otherwise.
+        """
         return True
 
     # UserMixin/Flask-Login requires is_anonymous to be defined
     @property
     def is_anonymous(self):
+        """
+        Indicates whether the user is anonymous.
+        
+        Returns:
+            bool: True if the user is anonymous, False otherwise.
+        """
         return False
     
-    # validate uid is a unique GitHub username
     @property
     def email(self):
+        """
+        Gets the user's email.
+        
+        Returns:
+            str: The user's email.
+        """
         return self._email
     
     @email.setter
     def email(self, email):
+        """
+        Sets the user's email.
+        
+        Args:
+            email (str): The new email for the user.
+        """
         if email is None or email == "":
             self._email = "?"
         else:
             self._email = email
         
     def set_email(self):
-        """Set the email of the user based on the UID, the GitHub username."""
+        """
+        Sets the email of the user based on the UID, the GitHub username.
+        """
         data, status = GitHubUser().get(self._uid)
         if status == 200:
             self.email = data.get("email", "?")
-            pass
         else:
             self.email = "?"
 
-    # a name getter method, extracts name from object
     @property
     def name(self):
+        """
+        Gets the user's name.
+        
+        Returns:
+            str: The user's name.
+        """
         return self._name
 
-    # a setter function, allows name to be updated after initial object creation
     @name.setter
     def name(self, name):
+        """
+        Sets the user's name.
+        
+        Args:
+            name (str): The new name for the user.
+        """
         self._name = name
 
-    # a getter method, extracts email from object
     @property
     def uid(self):
+        """
+        Gets the user's unique identifier.
+        
+        Returns:
+            str: The user's unique identifier.
+        """
         return self._uid
 
-    # a setter function, allows name to be updated after initial object creation
     @uid.setter
     def uid(self, uid):
+        """
+        Sets the user's unique identifier.
+        
+        Args:
+            uid (str): The new unique identifier for the user.
+        """
         self._uid = uid
 
-    # check if uid parameter matches user id in object, return boolean
     def is_uid(self, uid):
+        """
+        Checks if the provided UID matches the user's UID.
+        
+        Args:
+            uid (str): The UID to check.
+        
+        Returns:
+            bool: True if the UID matches, False otherwise.
+        """
         return self._uid == uid
 
     @property
     def password(self):
+        """
+        Gets the user's password (partially obscured for security).
+        
+        Returns:
+            str: The user's password (first 10 characters followed by "...").
+        """
         return self._password[0:10] + "..."  # because of security only show 1st characters
 
-            
-    # set password, this is conventional setter with business logic
     def set_password(self, password):
-        """Create a hashed password."""
+        """
+        Sets the user's password (hashed).
+        
+        Args:
+            password (str): The new password for the user.
+        """
         self._password = generate_password_hash(password, "pbkdf2:sha256", salt_length=10)
 
-    # check password parameter versus stored/encrypted password
     def is_password(self, password):
-        """Check against hashed password."""
-        result = check_password_hash(self._password, password)
-        return result
+        """
+        Checks if the provided password matches the user's stored password.
+        
+        Args:
+            password (str): The password to check.
+        
+        Returns:
+            bool: True if the password matches, False otherwise.
+        """
+        return check_password_hash(self._password, password)
 
-    # output content using str(object) in human readable form, uses getter
-    # output content using json dumps, this is ready for API response
     def __str__(self):
+        """
+        Returns a string representation of the user object (JSON format).
+        
+        Returns:
+            str: A JSON string representation of the user object.
+        """
         return json.dumps(self.read())
 
     @property
     def role(self):
+        """
+        Gets the user's role.
+        
+        Returns:
+            str: The user's role.
+        """
         return self._role
 
     @role.setter
     def role(self, role):
+        """
+        Sets the user's role.
+        
+        Args:
+            role (str): The new role for the user.
+        """
         self._role = role
 
     def is_admin(self):
+        """
+        Checks if the user is an admin.
+        
+        Returns:
+            bool: True if the user is an admin, False otherwise.
+        """
         return self._role == "Admin"
     
-    # getter method for profile picture
     @property
     def pfp(self):
+        """
+        Gets the user's profile picture path.
+        
+        Returns:
+            str: The path to the user's profile picture.
+        """
         return self._pfp
 
-    # setter function for profile picture
     @pfp.setter
     def pfp(self, pfp):
+        """
+        Sets the user's profile picture path.
+        
+        Args:
+            pfp (str): The new profile picture path for the user.
+        """
         self._pfp = pfp
 
-    # CRUD create/add a new record to the table
-    # returns self or None on error
     def create(self, inputs=None):
+        """
+        Adds a new record to the table and commits the transaction.
+        
+        Args:
+            inputs (dict, optional): Additional data to update the user with.
+        
+        Returns:
+            User: The created user object, or None on error.
+        """
         try:
             db.session.add(self)  # add prepares to persist person object to Users table
             db.session.commit()  # SqlAlchemy "unit of work pattern" requires a manual commit
@@ -184,9 +319,13 @@ class User(db.Model, UserMixin):
             db.session.rollback()
             return None
 
-    # CRUD read converts self to dictionary
-    # returns dictionary
     def read(self):
+        """
+        Converts the user object to a dictionary.
+        
+        Returns:
+            dict: A dictionary representation of the user object.
+        """
         data = {
             "id": self.id,
             "uid": self.uid,
@@ -197,9 +336,16 @@ class User(db.Model, UserMixin):
         }
         return data
         
-    # CRUD update: updates user name, password, phone
-    # returns self
     def update(self, inputs):
+        """
+        Updates the user object with new data.
+        
+        Args:
+            inputs (dict): A dictionary containing the new data for the user.
+        
+        Returns:
+            User: The updated user object, or None on error.
+        """
         if not isinstance(inputs, dict):
             return self
 
@@ -228,9 +374,13 @@ class User(db.Model, UserMixin):
             return None
         return self
     
-    # CRUD delete: remove self
-    # None
     def delete(self):
+        """
+        Removes the user object from the database and commits the transaction.
+        
+        Returns:
+            None
+        """
         try:
             db.session.delete(self)
             db.session.commit()
@@ -239,7 +389,13 @@ class User(db.Model, UserMixin):
         return None   
     
     def save_pfp(self, image_data, filename):
-        """For saving profile picture."""
+        """
+        Saves the user's profile picture.
+        
+        Args:
+            image_data (bytes): The image data of the profile picture.
+            filename (str): The filename of the profile picture.
+        """
         try:
             user_dir = os.path.join(app.config['UPLOAD_FOLDER'], self.uid)
             if not os.path.exists(user_dir):
@@ -252,16 +408,21 @@ class User(db.Model, UserMixin):
             raise e
         
     def delete_pfp(self):
-        """Deletes profile picture from user record."""
+        """
+        Deletes the user's profile picture from the user record.
+        """
         self.pfp = None
         db.session.commit()
         
     def set_uid(self, new_uid=None):
         """
-        Update the user's directory based on the new UID provided.
+        Updates the user's directory based on the new UID provided.
 
-        :param new_uid: Optional new UID to update the user's directory.
-        :return: The updated user object.
+        Args:
+            new_uid (str, optional): The new UID to update the user's directory.
+        
+        Returns:
+            User: The updated user object.
         """
         # Store the old UID for later comparison
         old_uid = self._uid
@@ -280,8 +441,19 @@ class User(db.Model, UserMixin):
 
 """Database Creation and Testing """
 
-# Builds working data set for testing
 def initUsers():
+    """
+    The initUsers function creates the User table and adds tester data to the table.
+    
+    Uses:
+        The db ORM methods to create the table.
+    
+    Instantiates:
+        User objects with tester data.
+    
+    Raises:
+        IntegrityError: An error occurred when adding the tester data to the table.
+    """
     with app.app_context():
         """Create database and tables"""
         db.create_all()

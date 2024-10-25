@@ -1,4 +1,5 @@
 # section.py
+from sqlite3 import IntegrityError
 from __init__ import app, db
 
 class Section(db.Model):
@@ -40,3 +41,16 @@ def initSections():
         """Create database and tables"""
         db.create_all()
         """Tester data for table"""
+        
+        s1 = Section(name='Academics', theme='Education')
+        s2 = Section(name='Sports', theme='Athletics')
+        s3 = Section(name='Entertainment', theme='Media')
+        sections = [s1, s2, s3]
+        
+        for section in sections:
+            try:
+                section.create()
+            except IntegrityError:
+                '''fails with bad or duplicate data'''
+                db.session.remove()
+                print(f"Records exist, duplicate email, or error: {section.uid}")

@@ -1,4 +1,5 @@
 # group.py
+from sqlite3 import IntegrityError
 from __init__ import app, db
 
 class Group(db.Model):
@@ -26,6 +27,10 @@ class Group(db.Model):
         self._name = name
         self._section_id = section_id
         self._moderator_id = moderator_id
+        
+    @property
+    def name(self):
+        return self._name
 
     def __repr__(self):
         return f"Group(id={self.id}, name={self._name}, section_id={self._section_id}, moderator_id={self._moderator_id})"
@@ -43,3 +48,16 @@ def initGroups():
         """Create database and tables"""
         db.create_all()
         """Tester data for table"""
+        
+        g1 = Group(name='Math Club', section_id=1, moderator_id=1)
+        g2 = Group(name='Football Team', section_id=2, moderator_id=2)
+        g3 = Group(name='Movie Buffs', section_id=3, moderator_id=3)
+        
+        groups = [g1, g2, g3]
+        for group in groups:
+            try:
+                group.create()
+            except IntegrityError:
+                '''fails with bad or duplicate data'''
+                db.session.remove()
+                print(f"Records exist, duplicate email, or error: {group.uid}")
