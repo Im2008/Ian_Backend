@@ -13,6 +13,18 @@ user_api = Blueprint('user_api', __name__, url_prefix='/api')
 # API docs: https://flask-restful.readthedocs.io/en/latest/api.html
 api = Api(user_api)
 
+import requests
+
+class GitHubUser:
+    def get(self, uid):
+        # Replace this URL with the appropriate GitHub API URL for user lookup
+        url = f"https://api.github.com/users/{uid}"
+        response = requests.get(url)
+
+        # Check if the request was successful
+        if response.status_code == 200:
+            return response.json(), 200  # Return user data and 200 status code
+        return None, response.status_code  # Return None and error status code if not found
 class UserAPI:
     """
     Define the API endpoints for the User model.

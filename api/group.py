@@ -20,7 +20,6 @@ The Api object is connected to the Blueprint object to define the API endpoints.
 - For more information, refer to the API docs: https://flask-restful.readthedocs.io/en/latest/api.html
 """
 api = Api(group_api)
-
 class GroupAPI:
     """
     Define the API CRUD endpoints for the Group model.
