@@ -42,6 +42,14 @@ class Group(db.Model):
         except Exception as e:
             db.session.rollback()
             raise e
+    
+    def read(self):
+        return {
+            'id': self.id,
+            'name': self._name,
+            'section_id': self._section_id,
+            'moderator_id': self._moderator_id
+        }
         
 def initGroups():
     with app.app_context():

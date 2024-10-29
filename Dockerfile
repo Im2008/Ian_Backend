@@ -1,4 +1,4 @@
-FROM docker.io/python:3.11
+FROM docker.io/python:3.12
 
 WORKDIR /
 
@@ -10,7 +10,7 @@ COPY . /
 RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install gunicorn
 
-ENV GUNICORN_CMD_ARGS="--workers=1 --bind=0.0.0.0:8087"
+ENV GUNICORN_CMD_ARGS="--workers=3 --bind=0.0.0.0:8887"
 
 EXPOSE 8087
 

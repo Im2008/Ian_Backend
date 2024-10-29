@@ -14,6 +14,8 @@ from __init__ import app, db, login_manager  # Key Flask objects
 from api.user import user_api 
 from api.pfp import pfp_api
 from api.post import post_api
+from api.group import group_api
+from api.section import section_api
 # database Initialization functions
 from model.user import User, initUsers
 from model.group import initGroups
@@ -25,6 +27,8 @@ from model.section import initSections
 app.register_blueprint(user_api)
 app.register_blueprint(pfp_api) 
 app.register_blueprint(post_api)
+app.register_blueprint(group_api)
+app.register_blueprint(section_api)
 
 # Tell Flask-Login the view function name of your login route
 login_manager.login_view = "login"
@@ -136,4 +140,4 @@ app.cli.add_command(custom_cli)
 # this runs the flask application on the development server
 if __name__ == "__main__":
     # change name for testing
-    app.run(debug=True, host="0.0.0.0", port="8087")
+    app.run(debug=True, host="0.0.0.0", port="8887")

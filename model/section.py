@@ -35,6 +35,13 @@ class Section(db.Model):
         except Exception as e:
             db.session.rollback()
             raise e
+        
+    def read(self):
+        return {
+            'id': self.id,
+            'name': self._name,
+            'theme': self._theme
+        }
 
 def initSections():
     with app.app_context():
