@@ -180,13 +180,9 @@ class User(db.Model, UserMixin):
         
     def set_email(self):
         """
-        Sets the email of the user based on the UID, the GitHub username.
+        Sets the email of the user based on the UID 
         """
-        data, status = GitHubUser().get(self._uid)
-        if status == 200:
-            self.email = data.get("email", "?")
-        else:
-            self.email = "?"
+        self.email = "?"
 
     @property
     def name(self):

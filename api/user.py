@@ -100,10 +100,6 @@ class UserAPI:
             if uid is None or len(uid) < 2:
                 return {'message': 'User ID is missing, or is less than 2 characters'}, 400
 
-            # Validate GitHub account
-            _, status = GitHubUser().get(uid)
-            if status != 200:
-                return {'message': f'User ID {uid} not a valid GitHub account'}, 404
 
             # Setup minimal USER OBJECT
             user_obj = User(name=name, uid=uid)
@@ -143,12 +139,6 @@ class UserAPI:
                         return {'message': f'User {uid} not found'}, 404
             else:
                 user = current_user  # Non-admin can only update themselves
-
-            # Validate GitHub account for UID change
-            if body.get('uid') and body.get('uid') != user._uid:
-                _, status = GitHubUser().get(body.get('uid'))
-                if status != 200:
-                    return {'message': f'User ID {body.get("uid")} not a valid GitHub account'}, 404
 
             # Update the user object with the new data
             user.update(body)
